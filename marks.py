@@ -125,7 +125,7 @@ def main(wf):
              len(results), query, time() - start))
 
     # Output results to Alfred
-    for (description, extended, href) in results:
+    for (href, extended, description) in results:
         wf.add_item(description, extended, valid=True, arg=href, icon='icon.png')
 
     wf.send_feedback()
