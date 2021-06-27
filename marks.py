@@ -19,6 +19,8 @@ from time import time
 
 import sqlite3
 
+import metadata_parser
+
 from workflow import Workflow, ICON_INFO, ICON_WARNING
 from workflow.background import run_in_background, is_running
 
@@ -49,13 +51,29 @@ def make_rank_func(weights):
                    if x[1])
     return rank
 
+def insert_url(url, type):
+    page = metadata_parser.MetadataParser(url=url)
+    description = page['og']['description']
+    title = page['page']['title']
+    db = sqlite3.connect(INDEX_DB)
+    cursor = db.cursor()
+    try:
+        cursor.execute("""INSERT INTO marks(href, extended, description, type) VALUES(?, ?, ?, ?);
+                        """, (url, title, description, type))
+        db.commit()
+    except sqlite3.OperationalError as err:
+        raise err
 
 def main(wf):
     # Workflow requires a query
     query = wf.args[0]
     type = None
     if len(wf.args) > 1:
-        type = wf.args[1]
+        if wf.args[1] in ['quick', 'reference', 'watch']:
+            type = wf.args[1]
+        elif wf.args[1] == 'add':
+            insert_url(query)
+
 
     index_exists = True
 
